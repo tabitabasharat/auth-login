@@ -6,12 +6,13 @@ import Row from "react-bootstrap/Row";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { updateUser } from "./UserReducer";
+import { updateTask } from "../../lib/midleware/userdata";
 
 function Update() {
   const { id } = useParams();
-  const user = useSelector((state) => state.users);
-  console.log("user data", user);
-  const existingUser = user.filter((f) => f.id == (id));
+  const {loading, error, updateid} = useSelector((state) => state.edit);
+  console.log("edit user data", updateid);
+  const existingUser = updateid.filter((f) => f.id == (id));
   const { name, email } = existingUser[0];
   const [uname, setName] = useState(name);
   const [unemail, setEmail] = useState(email);
@@ -21,7 +22,7 @@ function Update() {
   const handleSubmit = (e) => {
     e.preventDefault();
         if (name && email) {
-          dispatch(updateUser({ 
+          dispatch(updateTask({ 
             id: id,
             name:uname,
             email:unemail,
@@ -32,11 +33,12 @@ function Update() {
         } else {
           alert('Please fill in all fields!');
         }
-    // navigate("/");
   }
 
   return (
     <div className="container d-flex flex-column justify-content-center align-items-center">
+      {loading && <h1>Loading...</h1>}
+      {error && <h1>{error}</h1>}
       <h1 className="mb-4">UpDate User</h1>
       <Form className="" style={{ width: "50%" }} onSubmit={handleSubmit}>
         <Form.Group as={Row} className="mb-3" controlId="formPlaintextName" >
