@@ -29,18 +29,21 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 
-import Login from './component/Login/Login';
-import Main from './component/main/Main';
 import SignIn from '../src/component/SignIn/SignIn';
+import FirebaseConfig from './FirebaseConfig';
+import Home from './component/main-for-redux/Home';
+import Create from './component/main-for-redux/Create';
+import Update from './component/main-for-redux/Update';
 // import { Auth0Provider } from '@auth0/auth0-react';
 
 function App() {
   return (
+    
     <Router> 
       <Routes>
-        <Route path="/" element={<Login />} /> 
-        <Route path='/main' element={<Main/>} />
-        <Route path="/signin" element={<SignIn/>} /> 
+        <Route path="/" element={<Home />} /> 
+        <Route path="/create" element={<Create/>} /> 
+        <Route path="/edit/:id" element={<Update/>} />
       </Routes>
     </Router>
   );
