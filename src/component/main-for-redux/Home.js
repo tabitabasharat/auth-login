@@ -44,7 +44,7 @@ function Home() {
               <td>{items.email}</td>
               <td>
                 <Link
-                  to={`/edit/${dataid.id}`}
+                  to={`/edit/${items.id}`}
                   className="btn btn-primary btn-sm"
                 >
                   {" "}
