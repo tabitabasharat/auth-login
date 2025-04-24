@@ -1,0 +1,11 @@
+{
+    "users": [
+      { "id": 1, "name": "John Doe", "email": "john@example.com" },
+      { "id": 2, "name": "Jane Doe", "email": "jane@example.com" }
+    ],
+    "events": [
+      { "id": 1, "title": "Music Festival", "date": "2025-06-15" },
+      { "id": 2, "title": "Tech Conference", "date": "2025-08-22" }
+    ]
+  }
+  

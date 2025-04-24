@@ -6,7 +6,19 @@
   height: 40vmin;
   pointer-events: none;
 }
+p{
+  margin: 0px;
+}
+.side-drawer-header {
+  display: flex;
+  gap: 12px;
+  border: 1px solid #EBEAEA;
+  box-shadow: 2px 2px 10px 0px #0000000D;
+padding: 10px 14px !important;
+border-radius: 10px !important;
+margin: 40px 24px;
 
+}
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
