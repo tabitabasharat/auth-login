@@ -1,13 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { connectWallet } from '../utils/connectWallet';
-import Web3 from 'web3';
+import React, { useState, useEffect } from "react";
+import { connectWallet } from "../utils/connectWallet";
+import abi from "../utils/contractABI.json"; // Make sure ABI is valid!
+// Make sure this is the **deployed contract address** on Sepolia or whichever network
+import Web3 from "web3";
 
 export default function MyContractComponent() {
-  const [account, setAccount] = useState('');
+  const [account, setAccount] = useState("");
   const [web3, setWeb3] = useState(null);
-  const [balance, setBalance] = useState('');
-  const [recipient, setRecipient] = useState('');
-  const [amount, setAmount] = useState('');
+  const [balance, setBalance] = useState("");
+  const [recipient, setRecipient] = useState("");
+  const [amount, setAmount] = useState("");
+    const [greeting, setGreeting] = useState('');
+  const [contract, setContract] = useState("");
+
+  const contractAddress = "0x29938D84F99aC1b70432cf20756b8758E51984A4";
 
   useEffect(() => {
     const init = async () => {
@@ -16,44 +22,83 @@ export default function MyContractComponent() {
         const { account, web3 } = connection;
         setAccount(account);
         setWeb3(web3);
-
+        
+        const contractInstance = new web3.eth.Contract(abi, contractAddress);
+        setContract(contractInstance);
+        console.log("Contract Instance:", contractInstance);
+        
         const balanceInWei = await web3.eth.getBalance(account);
-        const balanceInEth = web3.utils.fromWei(balanceInWei, 'ether');
+        const balanceInEth = web3.utils.fromWei(balanceInWei, "ether");
         setBalance(balanceInEth);
+        console.log("Wallet balance In Eth:", balanceInEth);
+        
+        // ⚡ Only call balanceOf if contract actually supports it
+        try {
+          if (contractInstance.methods.balanceOf) {
+            const tokenBalance = await contractInstance.methods.balanceOf(account).call();
+            console.log("Token Balance:", web3.utils.fromWei(tokenBalance, "ether"));
+          } else {
+            console.log("No balanceOf function in this contract.");
+          }
+        } catch (error) {
+          console.error("balanceOf failed:", error.message);
+        }
       }
     };
     init();
   }, []);
+  
+
+  const updateGreeting = async () => {
+    if (!contract || !account) return;
+
+    try {
+      await contract.methods.setGreeting("Hello Web3").send({ from: account });
+      const newGreeting = await contract.methods.greeting().call();
+      setGreeting(newGreeting);
+    } catch (error) {
+      console.error("Error updating greeting:", error.message);
+      alert(
+        "Transaction failed. Make sure MetaMask is connected and has enough ETH."
+      );
+    }
+  };
 
   const sendEth = async () => {
     if (!web3 || !account || !recipient || !amount) {
-      alert('Please fill in all fields.');
+      alert("Please fill in all fields.");
       return;
     }
 
     try {
-      const amountInWei = web3.utils.toWei(amount, 'ether');
+      const amountInWei = web3.utils.toWei(amount, "ether");
       await web3.eth.sendTransaction({
         from: account,
         to: recipient,
         value: amountInWei,
       });
-      alert('Transaction successful!');
+      alert("Transaction successful!");
 
       // Update balance
       const updatedBalance = await web3.eth.getBalance(account);
-      setBalance(web3.utils.fromWei(updatedBalance, 'ether'));
+      console.log("Updated Balance:", updatedBalance);
+
+      setBalance(web3.utils.fromWei(updatedBalance, "ether"));
     } catch (error) {
-      console.error('Transaction failed:', error);
-      alert('Transaction failed!');
+      console.error("Transaction failed:", error);
+      alert("Transaction failed!");
     }
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h2>🚀 Web3 Wallet</h2>
-      <p><strong>Connected Wallet:</strong> {account}</p>
-      <p><strong>ETH Balance:</strong> {balance} ETH</p>
+      <p>
+        <strong>Connected Wallet:</strong> {account}
+      </p>
+      <p>
+        <strong>ETH Balance:</strong> {balance} ETH
+      </p>
 
       <hr />
 
@@ -63,18 +108,19 @@ export default function MyContractComponent() {
         placeholder="Recipient Wallet Address"
         value={recipient}
         onChange={(e) => setRecipient(e.target.value)}
-        style={{ marginBottom: '10px', width: '100%' }}
+        style={{ marginBottom: "10px", width: "100%" }}
       />
       <input
         type="text"
         placeholder="Amount in ETH"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        style={{ marginBottom: '10px', width: '100%' }}
+        style={{ marginBottom: "10px", width: "100%" }}
       />
-      <button onClick={sendEth} style={{ padding: '10px', width: '100%' }}>
+      <button onClick={sendEth} style={{ padding: "10px", width: "100%" }}>
         Send ETH
       </button>
+      {/* <button onClick={updateGreeting}>Update Greeting</button> */}
     </div>
   );
 }

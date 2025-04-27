@@ -15,7 +15,7 @@ const ContractComponent = () => {
   const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
-    const init = async () => {
+    const initialization = async () => {
       try {
         const connection = await connectWallet();
         if (!connection) return;
@@ -23,25 +23,22 @@ const ContractComponent = () => {
         const { web3, account } = connection;
         setWeb3(web3);
         setAccount(account);
-  
-        console.log("✅ Web3 initialized");
-        console.log("Account:", account);
-  
+        console.log("Account:", account);  
         const contractInstance = new web3.eth.Contract(abi, contractAddress);
         setContract(contractInstance);
   
         console.log("✅ Contract loaded:", contractInstance);
   
-        const data = await contractInstance.methods.newGreeting().call();
-        console.log("✅ Greeting:", data);
-        setGreeting(data);
+        // const data = await contractInstance.methods.newGreeting().call();
+        // console.log("✅ Greeting:", data);
+        // setGreeting(data);
       } catch (error) {
         console.error("❌ Error:", error);
         alert("Error connecting to contract. Check ABI, contract address, or function names.");
       }
     };
   
-    init();
+    initialization();
   }, []);
   
 
@@ -62,7 +59,7 @@ const ContractComponent = () => {
     <div style={{ padding: '20px' }}>
       <h2>Smart Contract Interaction</h2>
       <p><strong>Connected Wallet:</strong> {account}</p>
-      <p><strong>Greeting:</strong> {greeting || 'Loading...'}</p>
+      {/* <p><strong>Greeting:</strong> {greeting || 'Loading...'}</p> */}
       <button onClick={updateGreeting}>Update Greeting</button>
     </div>
   );
