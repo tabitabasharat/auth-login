@@ -1,64 +1,78 @@
-// /hooks/useWeb3.js
+import Web3 from "web3";
+import { USDT_CONTRACT_ADDRESS } from "../utils/contracts/USDT_ADDRESS";
+import USDT_ABI from "../utils/contracts/USDT_ABI.json";
 
-import { useEffect, useState } from 'react';
-import Web3 from 'web3';
-// import { USDT_CONTRACT_ADDRESS } from '../utils/contracts/USDT_ADDRESS';
-// import USDT_ABI from '../utils/contracts/USDT_ABI.json';
+const BSC_TESTNET_CHAIN_ID = "0x61";
+const BSC_TESTNET_PARAMS = {
+  chainId: BSC_TESTNET_CHAIN_ID,
+  chainName: "Binance Smart Chain Testnet",
+  nativeCurrency: {
+    name: "BNB",
+    symbol: "BNB",
+    decimals: 18,
+  },
+  rpcUrls: ["https://data-seed-prebsc-1-s1.binance.org:8545/"],
+};
 
-// export const useWeb3 = () => {
-//   const [web3, setWeb3] = useState(null);
-//   const [usdtContract, setUsdtContract] = useState(null);
-
-//   useEffect(() => {
-//     const initWeb3 = async () => {
-//       const web3Instance = new Web3(window.ethereum);
-//       await window.ethereum.request({ method: 'eth_requestAccounts' });
-//       const contract = new web3Instance.eth.Contract(USDT_ABI, USDT_CONTRACT_ADDRESS);
-//       setWeb3(web3Instance);
-//       setUsdtContract(contract);
-//     };
-//     initWeb3();
-//   }, []);
-
-//   return { web3, usdtContract };
-// };
-
-import { TOKEN_CONTRACT_ADDRESS } from '.././utils/contracts/Token_ADDRESS';
-import Token_ABI from '.././utils/contracts/Token_ABI.json';
-
-export const useWeb3 = () => {
-  const [web3, setWeb3] = useState(null);
-  const [tokenContract, setTokenContract] = useState(null);
-  const [account, setAccount] = useState(null);
-
-  useEffect(() => {
-    const initWeb3 = async () => {
-      if (window.ethereum) {
-        const web3Instance = new Web3(window.ethereum);
-        await window.ethereum.request({ method: 'eth_requestAccounts' }); // Connect to the wallet
-        const accounts = await web3Instance.eth.getAccounts();
-        const contract = new web3Instance.eth.Contract(Token_ABI, TOKEN_CONTRACT_ADDRESS);
-        setWeb3(web3Instance);
-        setTokenContract(contract);
-        setAccount(accounts[0]); // Set the user's account address
-      } else {
-        console.error('Ethereum provider not found. Please install MetaMask!');
-      }
-    };
-    initWeb3();
-  }, []);
-
-  const mintTokens = async (amount) => {
-    if (tokenContract && account) {
+const getContract = async () => {
+  if (!window.ethereum) {
+    throw new Error("MetaMask not found");
+  }
+  try {
+    const chainId = await window.ethereum.request({ method: "eth_chainId" });
+    if (chainId !== BSC_TESTNET_CHAIN_ID) {
       try {
-        // Calling mint function on the contract
-        await tokenContract.methods.mint(account, web3.utils.toWei(amount, 'ether')).send({ from: account });
-        console.log(`${amount} tokens minted successfully!`);
-      } catch (error) {
-        console.error('Error minting tokens:', error);
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: BSC_TESTNET_CHAIN_ID }],
+        });
+      } catch (switchError) {
+        // This error code indicates that the chain has not been added to MetaMask
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [BSC_TESTNET_PARAMS],
+            });
+          } catch (addError) {
+            throw new Error("Could not add BSC Testnet to MetaMask");
+          }
+        } else {
+          throw new Error("Failed to switch to BSC Testnet");
+        }
       }
+    }
+  } catch (error) {
+    console.error("Network error:", error);
+    throw new Error("Network configuration failed");
+  }
+  
+  const accounts = await window.ethereum.request({
+    method: "eth_requestAccounts",
+  });
+  const web3 = new Web3(window.ethereum);
+  
+  // Initialize the contract
+  const contract = new web3.eth.Contract(USDT_ABI, USDT_CONTRACT_ADDRESS);
+
+  // Mint function - assuming mint function exists in your contract
+  const mintTokens = async (amount) => {
+    if (!accounts || accounts.length === 0) throw new Error("No account found");
+
+    try {
+      // const decimals = 18; // USDT typically uses 18 decimals
+      const amountInWei = web3.utils.toWei(amount.toString(), "mwei"); // Convert to proper decimal units
+
+      // Send mint transaction
+      const tx = await contract.methods.mint(accounts[0], amountInWei).send({ from: accounts[0] });
+      console.log("Minting successful: ", tx);
+    } catch (error) {
+      console.error("Minting failed:", error);
+      throw new Error("Minting transaction failed");
     }
   };
 
-  return { mintTokens, account };
+  return { contract, mintTokens, account: accounts[0] };
 };
+
+export default getContract;

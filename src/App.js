@@ -26,7 +26,7 @@
 // export default App;
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import './App.css';
 // import Login from './component/Login/Login';
 import Login from './component/LearningAuth/Login';
@@ -41,14 +41,22 @@ import BalanceChecker from './component/contracts/BalanceChecker';
 // import { Auth0Provider } from '@auth0/auth0-react';
 
 function App() {
+  const DashboardLayout = () => (
+    <>
+      <ReuseableSideDrawer showSidebar={true} style={{ overflowX: "hidden" }}>
+        <Outlet />
+      </ReuseableSideDrawer>
+    </>
+  );
   return (
     <Router> 
       <Routes>
-        <Route path="/" element={<Login />} />
-      {/* <Route path="/" element={<Home/>} /> */}
+        {/* <Route path="/" element={<Login />} /> */}
+      <Route path="/" element={<Home/>} />
       {/* <Route path="/" element={<BalanceChecker/>} /> */}
         {/* <Route path="/" element={<ReuseableSideDrawer/>} /> */}
-        {/* <Route path='/' element={<Crudpage/>} /> */}
+        <Route path='/crud-app' element={<Crudpage/>} />
+        <Route path='/drawer' element={<ReuseableSideDrawer/>} />
         <Route path="/login" element={<Login />} /> 
         <Route path='/main' element={<Main/>} />
         <Route path="/signin" element={<SignIn/>} /> 

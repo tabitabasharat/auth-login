@@ -1,6 +1,6 @@
 // /components/MintTokenButton.js
 import React, { useState } from 'react';
-import { useWeb3 } from '../../hooks/useWeb3'; // Custom hook for web3 initialization
+import useWeb3 from '../../hooks/useWeb3'; // Custom hook for web3 initialization
 
 const MintTokenButton = () => {
   const [amount, setAmount] = useState('');

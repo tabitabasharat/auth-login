@@ -1,49 +1,92 @@
-// /components/TransferUSDTButton.js
-
-import React, { useState } from 'react';
-import { useWeb3 } from '../../hooks/useWeb3'; // Custom hook for web3 initialization
-import { web3Utils } from '../../utils/web3Utils'; // Utility for web3-related functions
-
+import React, { useState, useEffect } from "react";
+// import useWeb3 from "../../hooks/useWeb3";
+import { BalanceDisplay } from "./readMethods/BalanceDisplay";
+import getContract from "../../hooks/useWeb3";
+import { USDT_CONTRACT_ADDRESS } from "../../utils/contracts/USDT_ADDRESS";
+import Web3 from "web3";
 const TransferUSDTButton = () => {
   const [amountInUSDT, setAmountInUSDT] = useState(0);
-  const [toAddress, setToAddress] = useState('');
-  const [senderAddress, setSenderAddress] = useState('');
-  const { web3, usdtContract } = useWeb3(); // Custom hook to access web3 and contract
+  const [toAddress, setToAddress] = useState("");
+  const [senderAddress, setSenderAddress] = useState("");
+  const [senderBalance, setSenderBalance] = useState("Loading...");
+  // const { web3 } = useWeb3();
 
-  const handleTransfer = async () => {
-    if (typeof amountInUSDT !== 'number' || isNaN(amountInUSDT) || amountInUSDT <= 0) {
-      console.error("Invalid amountInUSDT:", amountInUSDT);
+  // Fetch balance
+  const fetchBalance = async () => {
+    // if (web3 && usdtContract && web3.utils.isAddress(senderAddress)) {
+    //   try {
+    //     const balance = await usdtContract.methods
+    //       .balanceOf(senderAddress)
+    //       .call();
+    //     const formattedBalance = web3.utils.fromWei(balance, "mwei"); // 6 decimals
+    //     setSenderBalance(formattedBalance);
+    //   } catch (error) {
+    //     console.error("Error fetching balance:", error);
+    //     setSenderBalance("Error fetching balance");
+    //   }
+    // } else {
+    //   setSenderBalance("Invalid address or contract not initialized");
+    // }
+  };
+  const sendUSDT = async (toAddress, amountInUSDT) => {
+    if (!Web3.utils.isAddress(toAddress)) {
+      alert("Invalid recipient address");
       return;
     }
-
-    const amount = web3.utils.toWei((amountInUSDT * (10 ** 6)).toString());
-    console.log("Transfer amount log", amount);
-
+  
+    const contract = await getContract();
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+    const userAccount = accounts[0];
+  
     try {
-      const tx = await usdtContract.methods.transfer(toAddress, amount).send({
-        from: senderAddress
+      const amountInWei = Web3.utils.toWei(amountInUSDT.toString(), "mwei"); // 6 decimals
+      console.log("Sending", amountInUSDT, "USDT =", amountInWei, "wei");
+  
+      // Optional: skip estimateGas (USDT sometimes rejects it)
+      await contract.methods.transfer(toAddress, amountInWei).send({
+        from: userAccount,
       });
-      console.log("Transaction successful:", tx);
+  
+      alert("Transaction successful!");
+      await fetchBalance();
     } catch (error) {
       console.error("Transaction failed:", error);
+      alert("Transaction failed: " + (error?.message || "Unknown error"));
     }
   };
+  
 
   return (
-    <div>
+    <div className="flex flex-col space-y-4">
+      <BalanceDisplay balance={senderBalance} onTransfer={sendUSDT} />
+
       <input
         type="number"
         value={amountInUSDT}
-        onChange={(e) => setAmountInUSDT(e.target.value)}
+        onChange={(e) => setAmountInUSDT(Number(e.target.value))}
         placeholder="Enter amount in USDT"
+        className="border p-2 rounded"
       />
       <input
         type="text"
         value={toAddress}
         onChange={(e) => setToAddress(e.target.value)}
         placeholder="Enter recipient address"
+        className="border p-2 rounded"
       />
-      <button onClick={handleTransfer}>Transfer USDT</button>
+
+      <p>
+        <strong>Sender Balance:</strong> {senderBalance} USDT
+      </p>
+
+      <button
+        onClick={() => sendUSDT(toAddress, amountInUSDT)}
+        className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+      >
+        Transfer USDT
+      </button>
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { connectWallet } from "../utils/connectWallet";
 import abi from "../utils/contractABI.json"; // Make sure ABI is valid!
-// Make sure this is the **deployed contract address** on Sepolia or whichever network
 import Web3 from "web3";
 
 export default function MyContractComponent() {
@@ -10,11 +9,10 @@ export default function MyContractComponent() {
   const [balance, setBalance] = useState("");
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
-    const [greeting, setGreeting] = useState('');
+  const [greeting, setGreeting] = useState("");
   const [contract, setContract] = useState("");
 
   const contractAddress = "0x29938D84F99aC1b70432cf20756b8758E51984A4";
-
   useEffect(() => {
     const init = async () => {
       const connection = await connectWallet();
@@ -22,32 +20,25 @@ export default function MyContractComponent() {
         const { account, web3 } = connection;
         setAccount(account);
         setWeb3(web3);
-        
+
         const contractInstance = new web3.eth.Contract(abi, contractAddress);
         setContract(contractInstance);
-        console.log("Contract Instance:", contractInstance);
-        
-        const balanceInWei = await web3.eth.getBalance(account);
-        const balanceInEth = web3.utils.fromWei(balanceInWei, "ether");
-        setBalance(balanceInEth);
-        console.log("Wallet balance In Eth:", balanceInEth);
-        
-        // ⚡ Only call balanceOf if contract actually supports it
+        console.log(contractInstance.methods);
+
         try {
-          if (contractInstance.methods.balanceOf) {
-            const tokenBalance = await contractInstance.methods.balanceOf(account).call();
-            console.log("Token Balance:", web3.utils.fromWei(tokenBalance, "ether"));
-          } else {
-            console.log("No balanceOf function in this contract.");
+          const isPaused = await contractInstance.methods.paused().call();
+          if (isPaused) {
+            alert("Contract is paused. Cannot interact at the moment.");
+            return;
           }
         } catch (error) {
-          console.error("balanceOf failed:", error.message);
+          console.error("Error in contract call:", error);
+          alert(`Error: ${error.message}`); // Log error details
         }
       }
     };
     init();
   }, []);
-  
 
   const updateGreeting = async () => {
     if (!contract || !account) return;
@@ -71,7 +62,9 @@ export default function MyContractComponent() {
     }
 
     try {
+      // Ensure amountInWei is defined
       const amountInWei = web3.utils.toWei(amount, "ether");
+
       await web3.eth.sendTransaction({
         from: account,
         to: recipient,
@@ -120,7 +113,6 @@ export default function MyContractComponent() {
       <button onClick={sendEth} style={{ padding: "10px", width: "100%" }}>
         Send ETH
       </button>
-      {/* <button onClick={updateGreeting}>Update Greeting</button> */}
     </div>
   );
 }
